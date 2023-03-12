@@ -18,6 +18,13 @@ namespace Uamazing.ConfValidatation.Core.Entrance
             if (options.HasFlag(ValidateOption.ThrowError)) throw new ValidateFailureException(vdResult);
             return vdResult;
         }
+
+        public static ValidateResult Validate<T>(this T data, Validator[] validators, ValidateOption options = ValidateOption.None)
+        {
+            var and = new And();
+            foreach (var validator in validators) and.Add(validator);
+            return Validate(data, and, options);
+        }
     }
 
     [Flags]

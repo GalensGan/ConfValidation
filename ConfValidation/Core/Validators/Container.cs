@@ -89,19 +89,29 @@ namespace Uamazing.ConfValidatation.Core.Validators
         /// <param name="fieldPathOrValue"></param>
         /// <param name="validatorNames"></param>
         /// <param name="failureMessage"></param>
-        public void Add(string fieldPathOrValue, string[] validatorNames, string failureMessage = "")
+        public void Add(string fieldPathOrValue, Validator[] validators, string failureMessage = "")
         {
             // 从全局容器中获取
             var andValidator = new And();
-            foreach (var validatorName in validatorNames)
+            foreach (var validator in validators)
             {
-                var validator = ValidatorManager.Instance.GetValidatorByName(validatorName);
-                if (validator == null) continue;
-
                 andValidator.Add(validator);
             }
 
             Add(fieldPathOrValue, andValidator, failureMessage);
+        }
+
+        /// <summary>
+        /// 通过路径添加自定义表达式的验证器
+        /// 当以 $ 开头时，说明是路径，此时传入的自定义函数体类型是
+        /// </summary>
+        /// <param name="valueOrPath">实际值或者路径</param>
+        /// <param name="validator"></param>
+        /// <param name="failureMessage"></param>
+        public void Add<T>(string valueOrPath, Func<T, bool> customValidator, string failureMessage = "")
+        {
+            var function = new Function<T>(customValidator);
+            Add(valueOrPath, function, failureMessage);
         }
 
         /// <summary>
@@ -117,6 +127,18 @@ namespace Uamazing.ConfValidatation.Core.Validators
             Add(path, validator, failureMessage);
         }
 
+        /// <summary>
+        /// 通过表达式批量添加验证
+        /// </summary>
+        /// <param name="fieldPathOrValue"></param>
+        /// <param name="validatorNames"></param>
+        /// <param name="failureMessage"></param>
+        public void Add<T>(Expression<Func<T>> lambdaExpression, Validator[] validators, string failureMessage = "")
+        {
+            // 从全局容器中获取
+            var path = PathHelper.ResovePathStartWithDollarSign(lambdaExpression);
+            Add(path, validators, failureMessage);
+        }
 
         /// <summary>
         /// 添加自定义表达式的验证器
@@ -126,23 +148,11 @@ namespace Uamazing.ConfValidatation.Core.Validators
         /// <param name="failureMessage"></param>
         public void Add<T>(T value, Func<T, bool> customValidator, string failureMessage = "")
         {
+            // 当 value 是字符串时，调用字符串型的重载
+
             var function = new Function<T>(customValidator);
             Add(value, function, failureMessage);
-        }
-
-
-        /// <summary>
-        /// 通过路径添加自定义表达式的验证器
-        /// 当以 $ 开头时，说明是路径，此时传入的自定义函数体类型是
-        /// </summary>
-        /// <param name="valueOrPath">实际值或者路径</param>
-        /// <param name="validator"></param>
-        /// <param name="failureMessage"></param>
-        public void Add<T>(string valueOrPath, Func<T, bool> customValidator, string failureMessage = "")
-        {
-            var function = new Function<T>(customValidator);
-            Add(valueOrPath, function, failureMessage);
-        }
+        }      
 
         /// <summary>
         /// 通过表达式树添加自定义表达式的验证器
@@ -203,6 +213,20 @@ namespace Uamazing.ConfValidatation.Core.Validators
 #pragma warning disable CS8604 // 引用类型参数可能为 null。
             Add(new ObjectValidatorWrapper(value, validator), failureMessage);
 #pragma warning restore CS8604 // 引用类型参数可能为 null。
+        }
+
+        /// <summary>
+        /// 添加特定值的验证器
+        /// 该验证器只能在当前使用，因为其值已经固定无法修改了
+        /// </summary>
+        /// <param name="value">验证实际的值</param>
+        /// <param name="validator"></param>
+        /// <param name="failureMessage"></param>
+        public void Add<T>(T value, Validator[] validators, string failureMessage = "")
+        {
+            var and = new And();
+            foreach (var validator in validators) and.Add(validator);
+            Add(value, and, failureMessage);
         }
         #endregion
     }

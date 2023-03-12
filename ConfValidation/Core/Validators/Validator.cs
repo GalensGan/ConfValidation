@@ -63,20 +63,20 @@ namespace Uamazing.ConfValidatation.Core.Validators
             return ValidatorManager.Instance.GetValidatorByName(validatorName);
         }
 
-        public static implicit operator Validator(string[] validatorNames)
-        {
-            // 从全局容器中获取
-            var andValidator = new And();
-            foreach (var validatorName in validatorNames)
-            {
-                var validator = ValidatorManager.Instance.GetValidatorByName(validatorName);
-                if (validator == null) continue;
+        //public static implicit operator Validator(string[] validatorNames)
+        //{
+        //    // 从全局容器中获取
+        //    var andValidator = new And();
+        //    foreach (var validatorName in validatorNames)
+        //    {
+        //        var validator = ValidatorManager.Instance.GetValidatorByName(validatorName);
+        //        if (validator == null) continue;
 
-                andValidator.Add(validator);
-            }
+        //        andValidator.Add(validator);
+        //    }
 
-            return andValidator;
-        }  
+        //    return andValidator;
+        //}  
         #endregion
 
     }

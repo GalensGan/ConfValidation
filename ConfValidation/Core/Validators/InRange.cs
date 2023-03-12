@@ -9,6 +9,10 @@ namespace Uamazing.ConfValidatation.Core.Validators
 {
     public class InRange : IsNumber
     {
+        public InRange() { }
+
+        public InRange(double min,double max) { Min = min; Max = max; }
+
         /// <summary>
         /// 范围左侧是闭区间
         /// </summary>
