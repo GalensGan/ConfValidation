@@ -8,7 +8,7 @@ ConfValidation 是一个灵活的、配置式的验证器，相较于 FluentVali
 
 ## 使用
 
-在使用 `ConfValidation` 时，可以根据需求任意组全
+在使用 `ConfValidation` 时，可以根据需求任意组合
 
 ### 常用示例
 
