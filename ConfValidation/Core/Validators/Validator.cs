@@ -49,7 +49,18 @@ namespace Uamazing.ConfValidatation.Core.Validators
         #endregion
 
 
-        #region 与 string 的隐式转换
+        #region 与 string 的隐式转换    
+        /// <summary>
+        /// 将字符串隐式转换成 validator
+        /// </summary>
+        /// <param name="validatorName"></param>
+
+        public static implicit operator Validator(string validatorName)
+        {
+            return ValidatorManager.Instance.GetValidatorByName(validatorName);
+        }
+       
+
         // 显示转换成字符串
         public static explicit operator string(Validator validator)
         {
@@ -58,26 +69,20 @@ namespace Uamazing.ConfValidatation.Core.Validators
             return name;
         }
 
-        public static implicit operator Validator(string validatorName)
+        public static explicit operator Validator(string[] validatorNames)
         {
-            return ValidatorManager.Instance.GetValidatorByName(validatorName);
+            // 从全局容器中获取
+            var andValidator = new And();
+            foreach (var validatorName in validatorNames)
+            {
+                var validator = ValidatorManager.Instance.GetValidatorByName(validatorName);
+                if (validator == null) continue;
+
+                andValidator.Add(validator);
+            }
+
+            return andValidator;
         }
-
-        //public static implicit operator Validator(string[] validatorNames)
-        //{
-        //    // 从全局容器中获取
-        //    var andValidator = new And();
-        //    foreach (var validatorName in validatorNames)
-        //    {
-        //        var validator = ValidatorManager.Instance.GetValidatorByName(validatorName);
-        //        if (validator == null) continue;
-
-        //        andValidator.Add(validator);
-        //    }
-
-        //    return andValidator;
-        //}  
         #endregion
-
     }
 }

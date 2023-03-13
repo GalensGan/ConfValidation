@@ -23,6 +23,8 @@ namespace Uamazing.ConfValidatation.Core.Utils
             if (match.Success)
             {
                 var result = match.Groups[1].Value.Replace(".get_Item(", "[").Replace(")", "]");
+                // 将路径中的引号去掉
+                result = result.Replace("\"","");
                 return result;
             }
 

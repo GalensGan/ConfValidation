@@ -176,7 +176,7 @@ namespace Uamazing.ConfValidatation.Core.Tests
             Assert.IsTrue(vdResult);
         }
 
-            [TestMethod()]
+        [TestMethod()]
         public void ValidateSampleTest()
         {
             var myClass = new Class()
@@ -255,7 +255,8 @@ namespace Uamazing.ConfValidatation.Core.Tests
                 { ()=>myClass.Order,new Validator[]{
                     VdNames.IsNumber,
                     new LessThan(2),
-                    new InRange(0,10)
+                    new InRange(0,10),
+                    new Function<int>(x=>x>1)                   
                 } },
                 // 逻辑且
                 { "$Order",new And(){
@@ -283,16 +284,17 @@ namespace Uamazing.ConfValidatation.Core.Tests
                 { "$Address.Email",new IsString() },
 
                 // 验证嵌套数组
-                { ()=>myClass.Students[0].Scores["Math"].Name,new IsString()},
+                { ()=>myClass.Students[0].Scores["Math"].Score,new GreaterThan(60)},
                 // 验证第一个学生所有科目的分数
-                { "$Students[0].Scores[].Score",new EachElement(){
+                // 集合中的值分为 Key 和 Value,所以使用 Scores[].Value
+                { "$Students[0].Scores[].Value.Score",new EachElement(){
                     VdNames.IsNumber,
                     new GreaterThan(60),
                 } },
                 // 不断向下嵌套验证
                 { "$Students[0]",new VdObj{
                     { "$Name",new Equals("Jack")},
-                    { "$Skills[\"cook\"]",new Or(){
+                    { "$Skills[cook]",new Or(){
                         VdNames.IsNumber,
                         new GreaterThan(60)
                     } }
@@ -304,7 +306,7 @@ namespace Uamazing.ConfValidatation.Core.Tests
 
             // 多次验证
             var vdResult2 = myClass.Name.Validate(VdNames.IsNumber);
-            Assert.IsTrue(vdResult2.Ok);
+            Assert.IsFalse(vdResult2.Ok);
             var vdResult3 = myClass.Students[0].Scores["Math"].Score.Validate(new And()
             {
                 new GreaterThan(60),
