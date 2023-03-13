@@ -11,7 +11,7 @@ namespace Uamazing.ConfValidatation.Core.Validators
     /// <summary>
     /// validator 的逻辑部分代码
     /// </summary>
-    public abstract partial class Validator
+    public partial class Validator
     {
         #region 入口
         /// <summary>

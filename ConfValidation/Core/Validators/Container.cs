@@ -36,6 +36,7 @@ namespace Uamazing.ConfValidatation.Core.Validators
         #region 增加验证器
         /// <summary>
         /// 添加验证器
+        /// 通用
         /// </summary>
         /// <param name="validator"></param>
         /// <param name="failureMessage"></param>
@@ -47,14 +48,15 @@ namespace Uamazing.ConfValidatation.Core.Validators
             _validators.Add(validator);
         }
 
+        #region 字符串路径
         /// <summary>
+        /// 添加路径或者字符串值的验证器
         /// 如果包含 $ 前缀，表示为字段路径
-        /// 否则被认为是字符串值
         /// </summary>
         /// <param name="valueOrPath"></param>
-        /// <param name="validator"></param>
+        /// <param name="validator">字符串会隐式转换成 validator 类型</param>
         /// <param name="failureMessage"></param>
-        public void Add(string valueOrPath, Validator validator, string failureMessage = "")
+        private void AddPathOrValueValidator(string valueOrPath, Validator validator, string failureMessage = "")
         {
             // 单独处理字符串输入
             // 说明是路径
@@ -70,17 +72,28 @@ namespace Uamazing.ConfValidatation.Core.Validators
         }
 
         /// <summary>
-        /// 通过 validatorName 来自动获取验证器
+        /// 通过名称添加验证器
+        /// 该接口同时解决输入两个 string 参数时，默认调用(Validator validator, string failureMessage = "")这个接口问题
         /// </summary>
-        /// <param name="fieldPathOrValue"></param>
+        /// <param name="valueOrPath"></param>
         /// <param name="validatorName"></param>
         /// <param name="failureMessage"></param>
-        public void Add(string fieldPathOrValue, string validatorName, string failureMessage = "")
+        public void Add(string valueOrPath,string validatorName, string failureMessage = "")
         {
-            // 将 name 转换成实际的 validator
             var validator = ValidatorManager.Instance.GetValidatorByName(validatorName);
+            Add(valueOrPath,validator, failureMessage);
+        }
 
-            Add(fieldPathOrValue, validator, failureMessage);
+        /// <summary>
+        /// 如果包含 $ 前缀，表示为字段路径
+        /// 否则被认为是字符串值
+        /// </summary>
+        /// <param name="valueOrPath"></param>
+        /// <param name="validator"></param>
+        /// <param name="failureMessage"></param>
+        public void Add(string valueOrPath, Validator validator, string failureMessage = "")
+        {
+            AddPathOrValueValidator(valueOrPath, validator, failureMessage);
         }
 
         /// <summary>
@@ -113,7 +126,9 @@ namespace Uamazing.ConfValidatation.Core.Validators
             var function = new Function<T>(customValidator);
             Add(valueOrPath, function, failureMessage);
         }
+        #endregion
 
+        #region 表达式路径，最后化成 (string,validator,failureMessage) 形式
         /// <summary>
         /// 
         /// </summary>
@@ -141,20 +156,6 @@ namespace Uamazing.ConfValidatation.Core.Validators
         }
 
         /// <summary>
-        /// 添加自定义表达式的验证器
-        /// </summary>
-        /// <param name="value">验证实际的值</param>
-        /// <param name="validator"></param>
-        /// <param name="failureMessage"></param>
-        public void Add<T>(T value, Func<T, bool> customValidator, string failureMessage = "")
-        {
-            // 当 value 是字符串时，调用字符串型的重载
-
-            var function = new Function<T>(customValidator);
-            Add(value, function, failureMessage);
-        }      
-
-        /// <summary>
         /// 通过表达式树添加自定义表达式的验证器
         /// 从表达式树中获取路径
         /// </summary>
@@ -167,7 +168,10 @@ namespace Uamazing.ConfValidatation.Core.Validators
             var function = new Function<T>(customValidator);
             Add(path, function, failureMessage);
         }
+        #endregion
 
+
+        #region 泛型类型
         /// <summary>
         /// 添加特定值的验证器
         /// 该验证器只能在当前使用，因为其值已经固定无法修改了
@@ -177,6 +181,13 @@ namespace Uamazing.ConfValidatation.Core.Validators
         /// <param name="failureMessage"></param>
         public void Add<T>(T value, Validator validator, string failureMessage = "")
         {
+            // 对于字符类型，转到字符类型去处理
+            if(value is string stringValue)
+            {
+                AddPathOrValueValidator(stringValue, validator,failureMessage);
+                return;
+            }
+
             // 提前将类型转为指定类型，避免后续重复拆箱
             // 对固定值进行包装，以便调用时传入固定值
             if (value is int intValue)
@@ -215,6 +226,7 @@ namespace Uamazing.ConfValidatation.Core.Validators
 #pragma warning restore CS8604 // 引用类型参数可能为 null。
         }
 
+
         /// <summary>
         /// 添加特定值的验证器
         /// 该验证器只能在当前使用，因为其值已经固定无法修改了
@@ -226,8 +238,24 @@ namespace Uamazing.ConfValidatation.Core.Validators
         {
             var and = new And();
             foreach (var validator in validators) and.Add(validator);
+
             Add(value, and, failureMessage);
         }
+
+        /// <summary>
+        /// 添加自定义表达式的验证器
+        /// </summary>
+        /// <param name="value">验证实际的值</param>
+        /// <param name="validator"></param>
+        /// <param name="failureMessage"></param>
+        public void Add<T>(T value, Func<T, bool> customValidator, string failureMessage = "")
+        {
+            if (value == null) throw new ArgumentNullException($"value 参数为空");
+
+            var function = new Function<T>(customValidator);
+            Add(value, function, failureMessage);
+        }
+        #endregion
         #endregion
     }
 }
