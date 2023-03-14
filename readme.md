@@ -229,7 +229,7 @@ model.Validate(new[]{validator1,validator2},option)
 
 验证器初始化器通过 `Add` 的各个重载方法来实现。它可以让初始化验证器变得非常灵活。比如向 `Container` 型的验证器（VdObj、And、Or等）中添加子验证器时，可以通过灵活应用这些重载，来随心所欲地初始化验证器。
 
-Add 方法有以下 3 种方式的重载：
+Add 方法有以下 2 种方式的参数重载：
 
 1. 基方法
 
@@ -239,41 +239,45 @@ Add 方法有以下 3 种方式的重载：
 
    若路径没有改变，默认路径为 `$`，表示验证的值为当前值
 
-2. 字符串路径型
+2. `public void Add<T>(T valueOrPath,Validator validator, string failureMessage="")`
 
-   `public void Add(string path,...)`
+   参数分别为：待验证值或路径，验证器，验证失败的消息
 
-   这种类型的重载要求输入的第一个参数是要验证值的路径，例如 `$Students[0]`。
+其中， T 类型的参数有 4 种形式：
 
-   > 为了区分字符串路径与字符串值，路径需要添加 `$` 作为前缀 
+1. 特定值
 
-3. 表达式型
+   表示验证值是一个特定的值，在定义时就确定了，比如 `myClass.Address`
 
-   `public void Add<T>(Expression<Func<T>> lambdaExpression,...)`
+2. 字符串路径
 
-   这种类型的重载要求输入的第一个参数是一个 lamda 表达式，例如 `()=>myClass.Address`，这种类型会将表达式转换成字符串路径形式。
+   为了区分字符串路径与字符串值，路径需要添加 `$` 作为前缀 ，在验证时，会根据给定路径动态求解对应的值进行验证。
 
-4. 静态值类型
+   其使用方式如： `$Address`
 
-   `public void Add<T>(T value,...)`
+3. 表达式
 
-   当不满足 2、3 项时，程序会调用该泛型重载，这个重载会将第一个值作为静态数据传入，在程序运行期间，始终不变。
+   第一个参数是一个 lamda 表达式，例如 `()=>myClass.Address`，这种类型会将表达式转换成字符串路径来处理。
 
-   > **注意：**这种方式不适合用于提前定义验证器组
+Validator 参数也有 3 种形式：
 
-上述重载中，除第 1 个重载类型外，其它每个重载类型包含 3 种重载形式，即第二个参数可以为：
+1. Validator
 
-1. Validator 类型
+   直接传入一个 Validator 实例
 
 2. 字符串
 
-   程序会自动将字符串隐式转换成 Validator 类型
+   程序会自动从 `VlidatorManger` 中按字符串名称查找对应验证器，最后隐式转换成 `Validator` 类型
 
 3. Validator 数组
 
-   程序会将所有 Validator 包装成一个 `And` Validator
+   程序会将所有 Validator 包装成一个 `And` Validator，然后调用方式 1 进行处理
 
-通过结合重载和隐式转换，可以进行非常灵活的初始化。具体使用见 [完整用法示例](#完整用法示例)
+4. lamda 表达式
+
+   例如 `x=>x>10`。程序会将 lamda 表达式转换成 `Function` 验证器，然后按方式 1 进行处理
+
+通过对上述重载的排列组合，`Add` 方法共有 12 种不同的重载，在实际应用中，可以综合使用，进行非常灵活的初始化。具体使用见 [完整用法示例](#完整用法示例)
 
 ### 隐式转换
 
@@ -378,7 +382,7 @@ ValidatorManager.Instance.AddValidator<CustomValidator>();
 
 `ConfValidator` 支持将一组验证器保存下来，在其它地方进行复用。我们可以提前将验证器组注册到验证器管理器中，然后通过字符串名称来调用。
 
-以 [I常用示例](#常用示例) 中 myClass 的验证器组为例：
+以 [常用示例](#常用示例) 中 myClass 的验证器组为例：
 
 ``` c#
 var validatorsGroup = new VdObj() // 顶层是对象类型，使用 VdObj 验证器包裹其它验证器
