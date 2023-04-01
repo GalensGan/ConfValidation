@@ -15,7 +15,7 @@ namespace Uamazing.ConfValidatation.Core.Entrance
         public static ValidateResult Validate<T>(this T data, Validator validator, ValidateOption options = ValidateOption.None)
         {
             var vdResult = validator.Validate(data, "$");
-            if (options.HasFlag(ValidateOption.ThrowError)) throw new ValidateFailureException(vdResult);
+            if (vdResult.NotOk && options.HasFlag(ValidateOption.ThrowError)) throw new ValidateFailureException(vdResult);
             return vdResult;
         }
 
